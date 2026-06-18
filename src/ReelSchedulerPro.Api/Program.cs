@@ -5,7 +5,7 @@ using Serilog;
 using System.Text;
 using ReelSchedulerPro.Infrastructure.Data;
 using ReelSchedulerPro.Infrastructure;
-using ReelSchedulerPro.Application.Services;
+using ReelSchedulerPro.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,11 +18,11 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// Add services
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddSignalR();
+// API Services with validation
+builder.Services.AddApiServices();
+
+// Infrastructure Services
+builder.Services.AddInfrastructureServices();
 
 // Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
@@ -31,8 +31,9 @@ builder.Services.AddDbContext<ReelSchedulerProDbContext>(options =>
     options.UseNpgsql(connectionString, x => x.MigrationsAssembly("ReelSchedulerPro.Infrastructure"))
 );
 
-// Infrastructure Services
-builder.Services.AddInfrastructureServices();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
 
 // Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -94,7 +95,7 @@ builder.Services.AddHangfireServer();
 
 var app = builder.Build();
 
-// Migrations
+// Run migrations
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ReelSchedulerProDbContext>();
